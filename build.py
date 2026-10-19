@@ -18,6 +18,8 @@ LOGIN_CSS = """<style>
 #ldash-login p{margin:0;color:var(--muted)}
 .ldash-logout{margin-top:6px;border:0;background:var(--well);color:var(--muted);border-radius:999px;padding:6px 12px;font-size:.8rem;cursor:pointer}
 .ldash-logout:hover{color:var(--fg)}
+#ldash-reconnect{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(104px + env(safe-area-inset-bottom,0px));z-index:60;display:flex;gap:12px;align-items:center;border-radius:999px;padding:8px 8px 8px 18px;max-width:calc(100% - 32px);font-size:.88rem}
+@media (min-width:961px){#ldash-reconnect{bottom:24px}}
 </style>"""
 
 HEAD = f"""<!doctype html>
@@ -39,6 +41,14 @@ SCRIPTS = """<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.4
 marker = "<script>\n(function(){"
 assert marker in page, "main script marker not found"
 page = page.replace(marker, SCRIPTS + marker, 1)
+
+# error copy: on Vercel the fix is re-connecting Google, not claude.ai connectors
+for a, b in [
+  ("Gmail-Anmeldung abgelaufen. Verbinde Gmail neu unter claude.ai → Einstellungen → Connectors.", "Google-Anmeldung abgelaufen. Tippe unten auf „Neu verbinden“."),
+  ("Gmail ist nicht verbunden. Füge Gmail unter claude.ai → Einstellungen → Connectors hinzu.", "Gmail ist nicht verbunden. Melde dich neu mit Google an."),
+  ("Google Kalender neu verbinden (claude.ai → Einstellungen → Connectors)", "Google-Anmeldung abgelaufen – unten „Neu verbinden“"),
+]:
+    page = page.replace(a, b)
 
 # logout control in the sidebar footer
 page = page.replace('<div class="foot">', '<div class="foot">\n      <button class="ldash-logout" type="button" onclick="window.ldashLogout()">Abmelden</button>', 1)

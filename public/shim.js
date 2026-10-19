@@ -80,6 +80,17 @@
     writeTok({ access: j.access_token, refresh: t.refresh, exp: Date.now() + (j.expires_in - 300) * 1000 });
     return j.access_token;
   }
+  let reconnectShown = false;
+  function showReconnect() {
+    if (reconnectShown) return; reconnectShown = true;
+    const el = document.createElement("div");
+    el.id = "ldash-reconnect";
+    el.className = "glass";
+    el.setAttribute("role", "status");
+    el.innerHTML = '<span>Google-Verbindung abgelaufen. Kalender und Mails sind gerade nicht aktuell.</span><button class="btn" type="button">Neu verbinden</button>';
+    el.querySelector("button").addEventListener("click", login);
+    document.body.appendChild(el);
+  }
   async function gfetch(url) {
     let tok = await googleToken(false);
     let r = await fetch(url, { headers: { authorization: "Bearer " + tok } });
@@ -130,7 +141,7 @@
       let stopped = false, timer = 0;
       const run = async () => {
         try { const res = await mcp.callTool(server, tool, input); if (!stopped) handler({ type: "data", result: res }); }
-        catch (e) { if (!stopped) handler({ type: "error", error: e && e.code ? e : { code: "upstream_error", message: String(e && e.message || e) } }); }
+        catch (e) { if (e && e.code === "needs_reauth") showReconnect(); if (!stopped) handler({ type: "error", error: e && e.code ? e : { code: "upstream_error", message: String(e && e.message || e) } }); }
         if (!stopped && opts && opts.refetchInterval) timer = setTimeout(run, Math.max(30000, opts.refetchInterval));
       };
       setTimeout(run, 0);

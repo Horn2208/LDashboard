@@ -354,6 +354,8 @@ body,.glass,.panel,.course,.stat,.slot,.todo{transition:background-color .35s ea
 #ldash-login p{margin:0;color:var(--muted)}
 .ldash-logout{margin-top:6px;border:0;background:var(--well);color:var(--muted);border-radius:999px;padding:6px 12px;font-size:.8rem;cursor:pointer}
 .ldash-logout:hover{color:var(--fg)}
+#ldash-reconnect{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(104px + env(safe-area-inset-bottom,0px));z-index:60;display:flex;gap:12px;align-items:center;border-radius:999px;padding:8px 8px 8px 18px;max-width:calc(100% - 32px);font-size:.88rem}
+@media (min-width:961px){#ldash-reconnect{bottom:24px}}
 </style>
 </head>
 <body>
@@ -1235,8 +1237,8 @@ function renderMail(sec, payload, storedAt){
 }
 function mailError(sec, err){
   const code = err?.code;
-  const msg = code === "needs_reauth" ? "Gmail-Anmeldung abgelaufen. Verbinde Gmail neu unter claude.ai → Einstellungen → Connectors."
-    : code === "server_not_connected" || code === "selection_required" ? "Gmail ist nicht verbunden. Füge Gmail unter claude.ai → Einstellungen → Connectors hinzu."
+  const msg = code === "needs_reauth" ? "Google-Anmeldung abgelaufen. Tippe unten auf „Neu verbinden“."
+    : code === "server_not_connected" || code === "selection_required" ? "Gmail ist nicht verbunden. Melde dich neu mit Google an."
     : code === "not_in_manifest" || code === "not_granted" ? "Gmail ist für diese Seite nicht freigegeben. Erlaube den Zugriff über das Berechtigungen-Menü der Seite."
     : code === "approval_required" ? "Gmail braucht deine Freigabe. Lade die Seite neu und bestätige den Zugriff."
     : code === "server_unavailable" ? "Gmail antwortet gerade nicht. Die Liste aktualisiert sich automatisch."
@@ -1272,7 +1274,7 @@ function mailError(sec, err){
         calEvents = null;
         calState = "error";
         $("cal-src").textContent = code === "server_not_connected" ? "Google Kalender nicht verbunden – nur eigene Termine"
-          : code === "needs_reauth" ? "Google Kalender neu verbinden (claude.ai → Einstellungen → Connectors)"
+          : code === "needs_reauth" ? "Google-Anmeldung abgelaufen – unten „Neu verbinden“"
           : code === "not_in_manifest" ? "Kalenderzugriff für diese Seite nicht erlaubt – nur eigene Termine"
           : "Kalender gerade nicht erreichbar – nur eigene Termine";
       }
