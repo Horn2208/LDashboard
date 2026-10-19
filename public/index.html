@@ -349,6 +349,27 @@ body,.glass,.panel,.course,.stat,.slot,.todo{transition:background-color .35s ea
 .t-row .t-del:hover{color:var(--crit);background:var(--well-2)}
 .t-note{justify-items:center;text-align:center;padding:36px 20px;color:var(--muted)}
 .t-note p{margin:0}
+
+/* weather / departures / mensa */
+.wx-now{display:flex;align-items:center;gap:16px}
+.wx-now .ico-big{width:56px;height:56px;border-radius:16px;background:var(--g-GI);display:grid;place-items:center;color:#fff;font-size:1.6rem;box-shadow:inset 0 1px 1px rgba(255,255,255,.55)}
+.wx-now b{font-family:var(--f-display);font-size:2.2rem;font-weight:800;line-height:1;font-variant-numeric:tabular-nums}
+.wx-meta{color:var(--muted);font-size:.85rem}
+.wx-hours{display:grid;grid-template-columns:repeat(auto-fit,minmax(58px,1fr));gap:6px;margin-top:12px}
+.wx-hours div{background:var(--well);border-radius:12px;padding:8px 6px;text-align:center;font-size:.78rem;display:grid;gap:2px;font-variant-numeric:tabular-nums}
+.wx-hours span{color:var(--muted)}
+.dep-list,.meal-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.dep{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:9px 12px;border-radius:var(--r-md);background:var(--well)}
+.dep .line{min-width:34px;text-align:center;font-weight:800;font-size:.8rem;padding:4px 8px;border-radius:8px;color:#fff;background:var(--warn)}
+.dep .to{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;font-size:.9rem}
+.dep .to small{display:block;color:var(--muted);font-weight:400;font-size:.74rem}
+.dep .when{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.dep .when small{display:block;font-weight:500;font-size:.72rem;color:var(--muted)}
+.dep .when.late small{color:var(--crit)}
+.meal{display:grid;gap:3px;padding:10px 12px;border-radius:var(--r-md);background:var(--well)}
+.meal .cat{display:flex;justify-content:space-between;gap:8px;font-size:.74rem;color:var(--muted);font-weight:600}
+.meal .nm{font-weight:600;font-size:.9rem;overflow-wrap:anywhere}
+.meal .tag{color:var(--ok);font-weight:700}
 </style>
 
 <style>
@@ -474,6 +495,19 @@ body,.glass,.panel,.course,.stat,.slot,.todo{transition:background-color .35s ea
       <section class="anim panel span-4" aria-labelledby="h-dl" style="--hue:var(--crit)">
         <div class="panel-head"><h2 id="h-dl">Fristen-Horizont</h2><span class="fresh">offene To-dos pro Woche · ab 3 wird's voll</span></div>
         <div class="chart-box"><div class="state" id="dl-state">Diagramm lädt…</div><div id="chart-dl"></div></div>
+      </section>
+
+      <section class="anim panel span-4" id="sec-go-weather" aria-labelledby="h-wx" style="--hue:var(--c-GI)" hidden>
+        <div class="panel-head"><h2 id="h-wx">Wetter Mannheim</h2><span class="fresh" id="wx-fresh"></span></div>
+        <div id="wx-body"><div class="skel"></div></div>
+      </section>
+      <section class="anim panel span-4" id="sec-go-rnv" aria-labelledby="h-rnv" style="--hue:var(--warn)" hidden>
+        <div class="panel-head"><h2 id="h-rnv">Abfahrten Popakademie</h2><span class="fresh" id="rnv-fresh"></span></div>
+        <ul class="dep-list" id="rnv-body"><li class="skel"></li></ul>
+      </section>
+      <section class="anim panel span-4" id="sec-go-mensa" aria-labelledby="h-mensa" style="--hue:var(--c-PI)" hidden>
+        <div class="panel-head"><h2 id="h-mensa">Mensa am Schloss</h2><span class="fresh" id="mensa-fresh"></span></div>
+        <ul class="meal-list" id="mensa-body"><li class="skel"></li></ul>
       </section>
 
       <section class="anim panel span-4" id="sec-mail" aria-labelledby="h-frist" style="--hue:var(--crit)">
@@ -1126,6 +1160,45 @@ function renderAll(){ renderHeader(); renderWeek(); renderNext(); renderTodos();
 renderAll();
 route();
 setInterval(() => { renderWeek(); renderNext(); renderCourses(); applyFilters(); }, 60000);
+
+/* ---------- Unterwegs: Wetter, RNV, Mensa (only on the Vercel build, which has /api) ---------- */
+(() => {
+  if (!window.LDASH_CONFIG) return;
+  ["sec-go-weather","sec-go-rnv","sec-go-mensa"].forEach(id => $(id).hidden = false);
+  const ICON = {"clear-day":"☀️","clear-night":"🌙","partly-cloudy-day":"⛅","partly-cloudy-night":"☁️","cloudy":"☁️","fog":"🌫️","wind":"💨","rain":"🌧️","sleet":"🌨️","snow":"❄️","hail":"🌨️","thunderstorm":"⛈️"};
+  const t = v => typeof v === "number" ? Math.round(v) + "°" : "–";
+  const stamp = id => $(id).textContent = "Stand " + new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
+  const fail = (id, msg) => { $(id).innerHTML = `<div class="state err">${esc(msg)}</div>`; };
+  async function weather(){
+    try { const r = await fetch("/api/weather"); if (!r.ok) throw 0; const w = await r.json();
+      $("wx-body").innerHTML = `<div class="wx-now"><span class="ico-big" aria-hidden="true">${ICON[w.now?.icon] || "🌡️"}</span>
+        <div><b>${t(w.now?.temp)}</b><div class="wx-meta">${t(w.min)} / ${t(w.max)} · Regen bis ${Math.round(w.rainMax || 0)} %</div></div></div>
+        <div class="wx-hours">${(w.hours||[]).map(h => `<div><span>${String(h.time).slice(11,13)} Uhr</span>${ICON[h.icon] || ""}<b>${t(h.temp)}</b></div>`).join("")}</div>`;
+      stamp("wx-fresh");
+    } catch(e){ fail("wx-body", "Wetter gerade nicht erreichbar."); }
+  }
+  async function rnv(){
+    try { const r = await fetch("/api/rnv"); if (!r.ok) throw 0; const j = await r.json(); const now = Date.now();
+      const deps = (j.departures||[]).filter(d => Date.parse(d.estimated || d.planned) > now - 30000).slice(0,7);
+      $("rnv-body").innerHTML = deps.length ? deps.map(d => { const p = Date.parse(d.planned), e = Date.parse(d.estimated || d.planned), late = Math.round((e - p)/60000), mins = Math.max(0, Math.round((e - now)/60000));
+        return `<li class="dep"><span class="line">${esc(d.line)}</span><span class="to">${esc(d.to)}<small>Steig ${esc(d.platform || "–")}</small></span>
+          <span class="when${late > 1 ? " late" : ""}">${mins === 0 ? "jetzt" : mins + " min"}<small>${new Date(e).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"})}${late > 0 ? " +" + late : ""}</small></span></li>`; }).join("")
+        : `<li class="state">Gerade keine Abfahrten.</li>`;
+      stamp("rnv-fresh");
+    } catch(e){ fail("rnv-body", "Abfahrten gerade nicht erreichbar."); }
+  }
+  async function mensa(){
+    try { const r = await fetch("/api/mensa"); if (!r.ok) throw 0; const j = await r.json();
+      $("mensa-body").innerHTML = j.closed ? `<li class="state">Heute geschlossen oder noch kein Plan.</li>` : j.meals.filter(m => !/salat|dessert/i.test(m.category)).map(m => `<li class="meal">
+        <span class="cat"><span>${esc(m.category)}${m.vegan ? ' · <span class="tag">vegan</span>' : ""}</span><span>${m.price != null ? m.price.toFixed(2).replace(".", ",") + " €" + (m.perWeight ? "/100 g" : "") : ""}</span></span>
+        <span class="nm">${esc(m.name)}</span></li>`).join("");
+      stamp("mensa-fresh");
+    } catch(e){ fail("mensa-body", "Speiseplan gerade nicht erreichbar."); }
+  }
+  weather(); rnv(); mensa();
+  setInterval(rnv, 60000); setInterval(weather, 15*60000); setInterval(mensa, 60*60000);
+  document.addEventListener("visibilitychange", () => { if (!document.hidden) rnv(); });
+})();
 
 /* ---------- interactions ---------- */
 document.querySelectorAll("[data-wmode]").forEach(b => b.addEventListener("click", () => {
