@@ -166,6 +166,8 @@ form.add input,form.add select{background:var(--well);border:0;box-shadow:inset 
 .slot.skipped .n{text-decoration:line-through;color:var(--muted)}
 .skip-tag{font-weight:650}
 .skip-btn{justify-self:start;margin-top:6px;border:0;background:var(--well-2);color:var(--muted);border-radius:999px;padding:4px 11px;font-size:.74rem;font-weight:600;cursor:pointer}
+.skip-row{display:flex;gap:6px;flex-wrap:wrap}
+.skip-btn.ghost{background:transparent;box-shadow:inset 0 0 0 1px var(--line)}
 .skip-btn:hover{color:var(--fg)}
 .slot.skipped .skip-btn{color:var(--accent-ink);background:var(--accent);opacity:1}
 .slot .x{position:absolute;top:8px;right:8px;border:0;background:var(--well-2);color:var(--muted);cursor:pointer;width:22px;height:22px;border-radius:50%;line-height:1;opacity:0}
@@ -625,6 +627,7 @@ const fmtDur = m => m >= 1440 ? `${Math.floor(m/1440)} T ${Math.floor((m%1440)/6
 function slots(){ return items.filter(i => i.kind === "slot").sort((a,b)=> a.day-b.day || mins(a.time)-mins(b.time)); }
 function todos(){ return items.filter(i => i.kind === "todo"); }
 function calSkips(){ const d = items.find(i => i.id === "skips"); return Array.isArray(d?.ids) ? d.ids : []; }
+function seriesSkips(){ const d = items.find(i => i.id === "skips"); return Array.isArray(d?.series) ? d.series : []; }
 
 let calEvents = null;    // raw Google Calendar events for this + next week (null = not loaded)
 let calState = "loading";
@@ -660,8 +663,8 @@ function cleanTitle(title, course){
 }
 
 // All concrete occurrences for this week and next week: calendar events + manual slots
-let wMode = "week", cursor = (() => { const d = new Date(); d.setHours(0,0,0,0); return d; })();
-try { const m = localStorage.getItem("cockpit-wmode"); if (m === "day" || m === "week") wMode = m; } catch(e){}
+let wMode = "day", cursor = (() => { const d = new Date(); d.setHours(0,0,0,0); return d; })();
+try { const m = localStorage.getItem("cockpit-wmode2"); if (m === "day" || m === "week") wMode = m; } catch(e){}
 const extraCal = new Map();   // mondayISO -> events[]
 let mcpRef = null;
 function viewMonday(){ return mondayOf(cursor); }
@@ -696,7 +699,9 @@ function occurrences(){
       const course = courseOf(e.summary);
       out.push({key:"cal:"+e.id, src:"cal", refId:e.id, start, end, allDay, course,
         title: course === "X" ? (e.summary||"Termin") : cleanTitle(e.summary, course), full:e.summary||"",
-        note: e.location ? e.location.replace(/\s+/g," ") : "", link:e.htmlLink, skipped: skips.includes(e.id)});
+        note: e.location ? e.location.replace(/\s+/g," ") : "", link:e.htmlLink, series: e.recurringEventId || null,
+        always: !!(e.recurringEventId && seriesSkips().includes(e.recurringEventId)),
+        skipped: skips.includes(e.id) || !!(e.recurringEventId && seriesSkips().includes(e.recurringEventId))});
     }
   }
   for (const s of slots()) {
@@ -710,7 +715,7 @@ function occurrences(){
       if (twin) { if (s.note && !twin.note.includes(s.note)) twin.note = s.note + (twin.note ? " · " + twin.note : ""); continue; }
       const wk = weekKey(start);
       out.push({key:"slot:"+s.id+":"+wk, src:"slot", refId:s.id, week:wk, start, end, allDay:false, course:s.course,
-        title:s.title, full:s.title, note:s.note||"", skipped:isSkipped(s, wk)});
+        title:s.title, full:s.title, note:s.note||"", always: !!s.skipAlways, skipped: !!s.skipAlways || isSkipped(s, wk)});
     }
   }
   return out.sort((a,b) => a.start - b.start || (b.allDay?1:0) - (a.allDay?1:0));
@@ -724,7 +729,10 @@ function renderHeader(){
 
 function skipBtn(o){
   const attrs = o.src === "cal" ? `data-cskip="${esc(o.refId)}"` : `data-skip="${esc(o.refId)}" data-week="${esc(o.week)}"`;
-  return `<button class="skip-btn" type="button" ${attrs} aria-pressed="${o.skipped}">${o.skipped ? "Doch hingehen" : "Nicht hingehen"}</button>`;
+  const always = o.src === "cal" ? (o.series ? `data-calways="${esc(o.series)}"` : "") : `data-salways="${esc(o.refId)}"`;
+  if (o.skipped && o.always) return `<button class="skip-btn" type="button" ${always} aria-pressed="true">Wieder hingehen</button>`;
+  if (o.skipped) return `<button class="skip-btn" type="button" ${attrs} aria-pressed="true">Doch hingehen</button>`;
+  return `<span class="skip-row"><button class="skip-btn" type="button" ${attrs} aria-pressed="false">Nicht hingehen</button>${always ? `<button class="skip-btn ghost" type="button" ${always} title="Jede Woche auslassen">Immer</button>` : ""}</span>`;
 }
 
 function renderWeek(){
@@ -758,7 +766,7 @@ function renderWeek(){
       const time = o.allDay ? "ganztägig" : `${hm(o.start)}–${hm(o.end)}`;
       const name = o.course === "X" ? esc(o.title) : `${esc(COURSES[o.course].short)} · ${esc(o.title)}`;
       return `<div data-course="${esc(o.course)}" class="slot${o.allDay?" allday":""}${past && !o.allDay?" past":""}${live && !o.skipped?" live":""}${o.skipped?" skipped":""}" style="--c:var(--c-${esc(o.course)})" title="${esc(o.full)}">
-        <span class="t">${time}${o.skipped ? ` · <span class="skip-tag">gehe nicht hin</span>` : ""}</span>
+        <span class="t">${time}${o.skipped ? ` · <span class="skip-tag">${o.always ? "lasse ich immer aus" : "gehe nicht hin"}</span>` : ""}</span>
         <span class="n">${name}</span>
         ${o.note ? `<span class="w">${esc(o.note)}</span>` : ""}
         ${past && !o.allDay ? "" : skipBtn(o)}
@@ -1216,7 +1224,7 @@ setInterval(() => { renderWeek(); renderNext(); renderCourses(); applyFilters();
 
 /* ---------- interactions ---------- */
 document.querySelectorAll("[data-wmode]").forEach(b => b.addEventListener("click", () => {
-  wMode = b.dataset.wmode; try { localStorage.setItem("cockpit-wmode", wMode); } catch(e){}
+  wMode = b.dataset.wmode; try { localStorage.setItem("cockpit-wmode2", wMode); } catch(e){}
   renderWeek(); applyFilters();
 }));
 const moveCursor = dir => { const n = new Date(cursor); n.setDate(n.getDate() + dir * (wMode === "day" ? 1 : 7)); if (wMode === "week") { const m = mondayOf(n); const t = new Date(); t.setHours(0,0,0,0); cursor = (mondayOf(t).getTime() === m.getTime()) ? t : m; } else cursor = n; renderWeek(); applyFilters(); };
@@ -1304,12 +1312,29 @@ document.addEventListener("change", async e => {
   try { await col.doc(id).update({done: e.target.checked, status: e.target.checked ? "done" : "todo", doneAt: e.target.checked ? Date.now() : null}); } catch(err){ showDbErr(err); }
 });
 document.addEventListener("click", async e => {
+  const cal = e.target?.dataset?.calways;
+  if (cal && col) {
+    const d = items.find(i => i.id === "skips") || {};
+    const cur = seriesSkips();
+    const on = !cur.includes(cal);
+    const series = on ? [...cur, cal] : cur.filter(x => x !== cal);
+    // un-skipping a series also clears single skips of its instances
+    const ids = on ? calSkips() : calSkips().filter(x => !x.startsWith(cal + "_"));
+    try { await col.doc("skips").set({kind:"skips", ids, series}); } catch(err){ showDbErr(err); }
+    return;
+  }
+  const sal = e.target?.dataset?.salways;
+  if (sal && col) {
+    const s = items.find(i => i.id === sal); if (!s) return;
+    try { await col.doc(sal).update(s.skipAlways ? {skipAlways: false, skipWeeks: []} : {skipAlways: true}); } catch(err){ showDbErr(err); }
+    return;
+  }
   const csk = e.target?.dataset?.cskip;
   if (csk && col) {
     const doc = items.find(i => i.id === "skips");
     const cur = calSkips();
     const next = cur.includes(csk) ? cur.filter(x => x !== csk) : [...cur, csk].slice(-300);
-    try { await col.doc("skips").set({kind:"skips", ids: next}); } catch(err){ showDbErr(err); }
+    try { await col.doc("skips").set({kind:"skips", ids: next, series: seriesSkips()}); } catch(err){ showDbErr(err); }
     return;
   }
   const sk = e.target?.dataset?.skip;

@@ -13,6 +13,7 @@
   window.__sb = sb;
 
   const TOK = "ldash-google";
+  const TOKEN_FN = C.supabaseUrl + "/functions/v1/google-token";
   const readTok = () => { try { return JSON.parse(localStorage.getItem(TOK) || "null"); } catch (e) { return null; } };
   const writeTok = (t) => { try { localStorage.setItem(TOK, JSON.stringify(t)); } catch (e) {} };
 
@@ -22,8 +23,12 @@
     sb.auth.onAuthStateChange((_ev, s) => {
       session = s;
       if (s && s.provider_token) {
-        const prev = readTok() || {};
-        writeTok({ access: s.provider_token, refresh: s.provider_refresh_token || prev.refresh || null, exp: Date.now() + 55 * 60 * 1000 });
+        writeTok({ access: s.provider_token, exp: Date.now() + 55 * 60 * 1000 });
+        // keep the long-lived Google refresh token on the server, so every device stays connected
+        if (s.provider_refresh_token) {
+          fetch(TOKEN_FN, { method: "POST", headers: { "content-type": "application/json", authorization: "Bearer " + s.access_token },
+            body: JSON.stringify({ action: "store", refresh_token: s.provider_refresh_token }) }).catch(() => {});
+        }
       }
     });
     sb.auth.getSession().then(({ data }) => { session = data.session; resolve(); });
@@ -69,15 +74,15 @@
   async function googleToken(force) {
     const t = readTok();
     if (t && t.access && !force && t.exp > Date.now()) return t.access;
-    if (!t || !t.refresh) throw { code: "needs_reauth", message: "Google-Anmeldung abgelaufen" };
-    const r = await fetch("/api/google-refresh", {
+    const { data: sd } = await sb.auth.getSession();
+    const r = await fetch(TOKEN_FN, {
       method: "POST",
-      headers: { "content-type": "application/json", authorization: "Bearer " + session.access_token },
-      body: JSON.stringify({ refresh_token: t.refresh })
+      headers: { "content-type": "application/json", authorization: "Bearer " + (sd.session || session).access_token },
+      body: JSON.stringify({ action: "access" })
     });
     if (!r.ok) throw { code: "needs_reauth", message: "Google-Token konnte nicht erneuert werden" };
     const j = await r.json();
-    writeTok({ access: j.access_token, refresh: t.refresh, exp: Date.now() + (j.expires_in - 300) * 1000 });
+    writeTok({ access: j.access_token, exp: Date.now() + (j.expires_in - 300) * 1000 });
     return j.access_token;
   }
   let reconnectShown = false;
