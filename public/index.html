@@ -133,6 +133,10 @@ form.add input,form.add select{background:var(--well);border:0;box-shadow:inset 
 @media (max-width:760px){.slot-form{grid-template-columns:1fr 1fr 1fr}.slot-form input[type=text]{grid-column:span 3}}
 
 /* week */
+.wk-nav{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.wk-nav .btn.ghost{padding:8px 14px}
+.week.single{min-width:0!important;grid-template-columns:1fr!important}
+.week.single .slot{padding:14px 16px}
 .week-scroll{overflow-x:auto;margin-inline:-4px;padding-inline:4px}
 .week{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;min-width:620px}
 .day{display:grid;gap:8px;align-content:start;min-width:0}
@@ -419,7 +423,13 @@ body,.glass,.panel,.course,.stat,.slot,.todo{transition:background-color .35s ea
     <div class="grid">
       <section class="anim panel span-12" id="sec-week" aria-labelledby="h-week">
         <div class="panel-head">
-          <div><h2 id="h-week">Woche <span class="mono" id="kw"></span></h2><span class="fresh" id="cal-src"></span></div>
+          <div><h2 id="h-week"><span id="week-title">Woche</span> <span class="mono" id="kw"></span></h2><span class="fresh" id="cal-src"></span></div>
+          <div class="wk-nav" role="group" aria-label="Zeitraum wählen">
+            <div class="seg" role="group" aria-label="Ansicht"><button type="button" data-wmode="day" aria-pressed="false">Tag</button><button type="button" data-wmode="week" aria-pressed="true">Woche</button></div>
+            <button class="tbtn" type="button" id="wk-prev" aria-label="Zurück"><svg class="ico" viewBox="0 0 24 24"><path d="M15 6l-6 6 6 6"/></svg></button>
+            <button class="btn ghost" type="button" id="wk-today">Heute</button>
+            <button class="tbtn" type="button" id="wk-next" aria-label="Weiter"><svg class="ico" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg></button>
+          </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="focus-chip" id="focus-chip" type="button" hidden></button><button class="btn" id="toggle-slot" type="button" aria-expanded="false">+ Termin</button></div>
         </div>
         <form class="add slot-form" id="slot-form" hidden>
@@ -602,11 +612,30 @@ function cleanTitle(title, course){
 }
 
 // All concrete occurrences for this week and next week: calendar events + manual slots
+let wMode = "week", cursor = (() => { const d = new Date(); d.setHours(0,0,0,0); return d; })();
+try { const m = localStorage.getItem("cockpit-wmode"); if (m === "day" || m === "week") wMode = m; } catch(e){}
+const extraCal = new Map();   // mondayISO -> events[]
+let mcpRef = null;
+function viewMonday(){ return mondayOf(cursor); }
+function ensureWeekLoaded(){
+  const base = mondayOf(new Date()), vm = viewMonday();
+  const diff = Math.round((vm - base) / 86400000);
+  if (diff === 0 || diff === 7 || !mcpRef) return;
+  const key = ymd(vm); if (extraCal.has(key)) return;
+  extraCal.set(key, []);
+  const until = new Date(vm.getTime() + 7*86400000);
+  mcpRef.watchTool("Google Calendar", "list_events",
+    {startTime: vm.toISOString(), endTime: until.toISOString(), orderBy: "startTime", pageSize: 150, timeZone: "Europe/Berlin"},
+    ev => { if (ev.type === "data") { const p = ev.result.payload; extraCal.set(key, (p && Array.isArray(p.events)) ? p.events : []); renderWeek(); applyFilters(); } },
+    {refetchInterval: 30*60*1000});
+}
 function occurrences(){
   const now = new Date(), mon = mondayOf(now), out = [];
   const skips = calSkips();
-  if (Array.isArray(calEvents)) {
-    for (const e of calEvents) {
+  if (Array.isArray(calEvents) || extraCal.size) {
+    const seen = new Set(); const allEv = [];
+    for (const e of [...(calEvents || []), ...[...extraCal.values()].flat()]) { if (!seen.has(e.id)) { seen.add(e.id); allEv.push(e); } }
+    for (const e of allEv) {
       if (e.status === "cancelled") continue;
       const allDay = !e.start?.dateTime;
       let start, end;
@@ -623,7 +652,8 @@ function occurrences(){
     }
   }
   for (const s of slots()) {
-    for (const w of [0,7]) {
+    const vOff = Math.round((viewMonday() - mon) / 86400000);
+    for (const w of [...new Set([0, 7, vOff])]) {
       const start = new Date(mon); start.setDate(mon.getDate() + Number(s.day) - 1 + w);
       const m = mins(s.time); start.setHours(Math.floor(m/60), m%60, 0, 0);
       const end = new Date(start.getTime() + Number(s.dur||90)*60000);
@@ -641,7 +671,6 @@ function occurrences(){
 function renderHeader(){
   const now = new Date();
   $("today-line").textContent = `${DAYS_LONG[now.getDay()]}, ${now.toLocaleDateString("de-DE",{day:"numeric",month:"long",year:"numeric"})}`;
-  $("kw").textContent = "KW " + isoWeek(now);
   $("cal-src").textContent = calState === "live" ? "aus deinem Google Kalender" : calState === "loading" ? "Kalender lädt…" : "nur eigene Termine";
 }
 
@@ -651,13 +680,29 @@ function skipBtn(o){
 }
 
 function renderWeek(){
-  const now = new Date(), mon = mondayOf(now), all = occurrences();
+  const now = new Date(), mon = viewMonday(), all = occurrences();
+  ensureWeekLoaded();
   const days = [];
   for (let i = 0; i < 7; i++) { const d = new Date(mon); d.setDate(mon.getDate()+i); days.push(d); }
   const inDay = d => all.filter(o => o.allDay ? (o.start <= d && o.end > d) : ymd(o.start) === ymd(d));
-  const shown = days.filter((d,i) => i < 5 || inDay(d).length);
-  $("week").style.gridTemplateColumns = `repeat(${shown.length}, minmax(0,1fr))`;
-  $("week").style.minWidth = (shown.length * 150) + "px";
+  const shown = wMode === "day" ? [new Date(cursor)] : days.filter((d,i) => i < 5 || inDay(d).length);
+  const single = wMode === "day";
+  $("week").classList.toggle("single", single);
+  $("week").style.gridTemplateColumns = single ? "" : `repeat(${shown.length}, minmax(0,1fr))`;
+  $("week").style.minWidth = single ? "" : (shown.length * 150) + "px";
+  // header label
+  const todayD = new Date(); todayD.setHours(0,0,0,0);
+  const dd = Math.round((cursor - todayD) / 86400000);
+  const wd = Math.round((mon - mondayOf(now)) / (7*86400000));
+  if (single) {
+    $("week-title").textContent = dd === 0 ? "Heute" : dd === 1 ? "Morgen" : dd === -1 ? "Gestern" : DAYS_LONG[cursor.getDay()];
+    $("kw").textContent = `${cursor.getDate()}.${cursor.getMonth()+1}.`;
+  } else {
+    $("week-title").textContent = wd === 0 ? "Diese Woche" : wd === 1 ? "Nächste Woche" : wd === -1 ? "Letzte Woche" : "Woche";
+    $("kw").textContent = "KW " + isoWeek(mon);
+  }
+  $("wk-today").setAttribute("aria-pressed", String(single ? dd === 0 : wd === 0));
+  document.querySelectorAll("[data-wmode]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.wmode === wMode)));
   $("week").innerHTML = shown.map(d => {
     const list = inDay(d), isToday = ymd(d) === ymd(now);
     const body = list.length ? list.map(o => {
@@ -1083,6 +1128,15 @@ route();
 setInterval(() => { renderWeek(); renderNext(); renderCourses(); applyFilters(); }, 60000);
 
 /* ---------- interactions ---------- */
+document.querySelectorAll("[data-wmode]").forEach(b => b.addEventListener("click", () => {
+  wMode = b.dataset.wmode; try { localStorage.setItem("cockpit-wmode", wMode); } catch(e){}
+  renderWeek(); applyFilters();
+}));
+const moveCursor = dir => { const n = new Date(cursor); n.setDate(n.getDate() + dir * (wMode === "day" ? 1 : 7)); if (wMode === "week") { const m = mondayOf(n); const t = new Date(); t.setHours(0,0,0,0); cursor = (mondayOf(t).getTime() === m.getTime()) ? t : m; } else cursor = n; renderWeek(); applyFilters(); };
+$("wk-prev").addEventListener("click", () => moveCursor(-1));
+$("wk-next").addEventListener("click", () => moveCursor(1));
+$("wk-today").addEventListener("click", () => { cursor = new Date(); cursor.setHours(0,0,0,0); renderWeek(); applyFilters(); });
+$("week").addEventListener("keydown", e => { if (e.target.closest("input,select,button")) return; if (e.key === "ArrowLeft") moveCursor(-1); if (e.key === "ArrowRight") moveCursor(1); });
 // boot stagger
 (() => { const els = [...document.querySelectorAll(".anim")]; els.forEach((el,i) => el.style.setProperty("--i", i)); document.body.classList.add("boot"); setTimeout(() => document.body.classList.remove("boot"), 1600); })();
 // cursor glow (lerped, desktop only)
@@ -1259,6 +1313,7 @@ function mailError(sec, err){
     MAIL_SECTIONS.forEach(s => { $(s.list).innerHTML = `<li class="state">Mails erscheinen hier, wenn du die Seite in claude.ai öffnest und Gmail verbunden ist.</li>`; });
     return;
   }
+  mcpRef = mcp;
   // Google Calendar: this week + next week
   const mon = mondayOf(new Date()), until = new Date(mon.getTime() + 14*86400000);
   mcp.watchTool("Google Calendar", "list_events",
