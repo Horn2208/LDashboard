@@ -537,6 +537,10 @@ body,.glass,.panel,.course,.stat,.slot,.todo{transition:background-color .35s ea
         <div class="panel-head"><h2 id="h-ini">Initiativen</h2><span class="fresh" id="f-ini"></span></div>
         <ul class="mail-list" id="m-ini"><li class="skel"></li><li class="skel"></li></ul>
       </section>
+      <section class="anim panel span-4" id="sec-go-exch" aria-labelledby="h-exch" style="--hue:var(--c-GI)" hidden>
+        <div class="panel-head"><h2 id="h-exch">Uni-Mail (Exchange)</h2><span class="fresh" id="f-exch"></span></div>
+        <ul class="mail-list" id="m-exch"><li class="skel"></li><li class="skel"></li></ul>
+      </section>
     </div>
 
     <section id="sec-courses" style="display:grid;gap:14px;scroll-margin-top:16px" aria-labelledby="h-courses">
@@ -1186,7 +1190,21 @@ setInterval(() => { renderWeek(); renderNext(); renderCourses(); applyFilters();
 /* ---------- Unterwegs: Wetter, RNV, Mensa (only on the Vercel build, which has /api) ---------- */
 (() => {
   if (!window.LDASH_CONFIG) return;
-  ["sec-go-weather","sec-go-rnv","sec-go-mensa"].forEach(id => $(id).hidden = false);
+  ["sec-go-weather","sec-go-rnv","sec-go-mensa","sec-go-exch"].forEach(id => $(id).hidden = false);
+  async function exch(){
+    const sec = { list: "m-exch", fresh: "f-exch", empty: "Keine Mails im Uni-Postfach." };
+    try {
+      const { data } = await window.__sb.auth.getSession();
+      if (!data.session) return;
+      const r = await fetch(window.LDASH_CONFIG.supabaseUrl + "/functions/v1/uni-mail?limit=10", { headers: { authorization: "Bearer " + data.session.access_token } });
+      const j = await r.json().catch(() => ({}));
+      if (j.error === "not_configured") { $("m-exch").innerHTML = `<li class="state">Uni-Zugang noch nicht hinterlegt (Supabase-Secrets UNI_ID und UNI_PASSWORD).</li>`; return; }
+      if (j.error === "auth_failed") { $("m-exch").innerHTML = `<li class="state err">Anmeldung am Uni-Postfach fehlgeschlagen. Prüfe UNI_ID und UNI_PASSWORD in Supabase.</li>`; return; }
+      if (!r.ok || j.error) throw 0;
+      renderMail(sec, j, Date.now());
+    } catch(e){ $("m-exch").innerHTML = `<li class="state err">Uni-Postfach gerade nicht erreichbar. Neuer Versuch in 5 Minuten.</li>`; }
+  }
+  exch(); setInterval(exch, 5 * 60000);
   const ICON = {"clear-day":"☀️","clear-night":"🌙","partly-cloudy-day":"⛅","partly-cloudy-night":"☁️","cloudy":"☁️","fog":"🌫️","wind":"💨","rain":"🌧️","sleet":"🌨️","snow":"❄️","hail":"🌨️","thunderstorm":"⛈️"};
   const t = v => typeof v === "number" ? Math.round(v) + "°" : "–";
   const stamp = id => $(id).textContent = "Stand " + new Date().toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"});
