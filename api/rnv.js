@@ -1,7 +1,7 @@
 // Live departures for Mannheim Popakademie (VRN EFA, stop de:08222:6006).
 export default async function handler(req, res) {
   const stop = "de:08222:6006";
-  const url = `https://www.vrn.de/mngvrn/XML_DM_REQUEST?outputFormat=rapidJSON&type_dm=any&name_dm=${encodeURIComponent(stop)}&mode=direct&useRealtime=1&limit=12`;
+  const url = `https://www.vrn.de/mngvrn/XML_DM_REQUEST?outputFormat=rapidJSON&type_dm=any&name_dm=${encodeURIComponent(stop)}&mode=direct&useRealtime=1&limit=16`;
   try {
     const r = await fetch(url, { headers: { accept: "application/json" } });
     if (!r.ok) return res.status(502).json({ error: "upstream", status: r.status });
@@ -12,7 +12,7 @@ export default async function handler(req, res) {
       planned: e.departureTimePlanned,
       estimated: e.departureTimeEstimated || null,
       platform: e.location?.properties?.platform || e.location?.disassembledName || ""
-    }));
+    })).filter((d) => d.line !== "62");
     res.setHeader("cache-control", "s-maxage=30, stale-while-revalidate=30");
     return res.status(200).json({ stop: "Popakademie", departures });
   } catch (e) {

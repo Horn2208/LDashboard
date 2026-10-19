@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#232428">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cockpit">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>HWS 2026 Cockpit</title>
 <link rel="stylesheet" href="bklit-charts.css">
@@ -424,6 +430,13 @@ body,.glass,.panel,.course,.stat,.slot,.todo{transition:background-color .35s ea
     </header>
 
     <div id="view-home">
+<section class="glass" id="push-box" style="border-radius:var(--r-lg);padding:12px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+  <img src="/icon-192.png" alt="" width="36" height="36" style="border-radius:10px">
+  <div style="flex:1;min-width:180px"><b>Benachrichtigungen</b><div class="fresh" id="push-state">…</div></div>
+  <button class="btn" type="button" id="push-on" hidden>Aktivieren</button>
+  <button class="btn ghost" type="button" id="push-test" hidden>Test senden</button>
+</section>
+
     <div class="anim stats">
       <div class="stat glass anim"><span class="label">Heute</span><b id="st-today">–</b></div>
       <div class="stat glass anim"><span class="label">Uni diese Woche</span><b id="st-hours">–</b></div>
@@ -569,6 +582,7 @@ body,.glass,.panel,.course,.stat,.slot,.todo{transition:background-color .35s ea
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script src="shim.js"></script>
+<script src="push.js"></script>
 <script>
 (function(){
 const COURSES = {

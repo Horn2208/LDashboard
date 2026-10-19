@@ -29,12 +29,19 @@ HEAD = f"""<!doctype html>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <meta name="theme-color" content="#232428">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Cockpit">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>:root{{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}}body{{margin:0}}img{{max-width:100%}}[hidden]{{display:none!important}}</style>
 """
 
 SCRIPTS = """<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
 <script src="shim.js"></script>
+<script src="push.js"></script>
 """
 
 # put the runtime in front of the page's own inline script
@@ -49,6 +56,17 @@ for a, b in [
   ("Google Kalender neu verbinden (claude.ai → Einstellungen → Connectors)", "Google-Anmeldung abgelaufen – unten „Neu verbinden“"),
 ]:
     page = page.replace(a, b)
+
+# notification opt-in card (works on phone too, where the sidebar is hidden)
+PUSH = """<section class="glass" id="push-box" style="border-radius:var(--r-lg);padding:12px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+  <img src="/icon-192.png" alt="" width="36" height="36" style="border-radius:10px">
+  <div style="flex:1;min-width:180px"><b>Benachrichtigungen</b><div class="fresh" id="push-state">…</div></div>
+  <button class="btn" type="button" id="push-on" hidden>Aktivieren</button>
+  <button class="btn ghost" type="button" id="push-test" hidden>Test senden</button>
+</section>
+"""
+assert '<div id="view-home">' in page
+page = page.replace('<div id="view-home">', '<div id="view-home">\n' + PUSH, 1)
 
 # logout control in the sidebar footer
 page = page.replace('<div class="foot">', '<div class="foot">\n      <button class="ldash-logout" type="button" onclick="window.ldashLogout()">Abmelden</button>', 1)
