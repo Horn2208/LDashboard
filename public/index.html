@@ -272,6 +272,79 @@ body,.glass,.panel,.course,.stat,.slot,.todo{transition:background-color .35s ea
   .app{padding-bottom:96px}
 }
 [data-hide]{display:none!important}
+
+/* ---- Aufgaben view ---- */
+#view-home,#view-tasks{display:grid;gap:22px;min-width:0;align-content:start}
+#view-home[hidden],#view-tasks[hidden]{display:none}
+.t-tools{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.t-filter{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px;border-radius:var(--r-xl);min-width:0}
+.t-filter select,.t-filter input{background:var(--well);border:0;box-shadow:inset 0 0 0 1px var(--line);border-radius:999px;padding:0 14px;height:40px;min-width:0;max-width:100%}
+.t-filter input{flex:1 1 220px}
+.t-filter input::placeholder{color:var(--faint)}
+.t-board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;align-items:start}
+@media (max-width:900px){.t-board{grid-template-columns:minmax(0,1fr)}}
+.t-col{border-radius:var(--r-xl);padding:16px;display:grid;gap:12px;align-content:start;min-width:0}
+.t-col.drop{box-shadow:var(--glass-sh),inset 0 0 0 2px var(--accent)}
+.t-colh{display:flex;align-items:center;gap:10px;padding:2px 4px;min-width:0}
+.t-colh h2{font-size:1rem}
+.t-dot{width:10px;height:10px;border-radius:50%;flex:none}
+.t-dot.todo{box-shadow:inset 0 0 0 2px var(--muted)}
+.t-dot.doing{background:var(--accent)}
+.t-dot.done{background:var(--ok)}
+.t-add{margin-left:auto;border:0;width:28px;height:28px;border-radius:50%;background:var(--well);color:var(--muted);cursor:pointer;display:grid;place-items:center;padding:0}
+.t-add:hover:not(:disabled){background:var(--well-2);color:var(--fg)}
+.t-add:disabled,.btn:disabled{opacity:.45;cursor:not-allowed}
+.t-cards{display:grid;gap:10px;align-content:start;min-height:72px}
+.t-nothing{font-size:.82rem;color:var(--faint);padding:14px 12px;text-align:center}
+.t-card{position:relative;display:grid;gap:10px;padding:14px;border-radius:var(--r-lg);background:var(--well);box-shadow:inset 0 0 0 1px var(--line);cursor:grab;min-width:0}
+.t-card:active{cursor:grabbing}
+.t-card.dragging{opacity:.45}
+.t-card:hover,.t-card:focus-visible{background:var(--well-2);box-shadow:inset 0 0 0 1px var(--line),0 18px 30px -14px var(--drop)}
+@media (prefers-reduced-motion:no-preference){
+  .t-card{transition:transform .2s cubic-bezier(.2,.7,.2,1),box-shadow .2s ease,background-color .2s ease}
+  .t-card:hover,.t-card:focus-visible{transform:translateY(-2px)}
+  .t-actions{transition:opacity .15s ease}
+}
+.t-pills{display:flex;flex-wrap:wrap;gap:6px;min-width:0}
+.t-course,.t-prio{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:650;padding:3px 10px;border-radius:999px;min-width:0;max-width:100%}
+.t-course{background:color-mix(in srgb,var(--c) 16%,transparent)}
+.t-course .n{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.t-prio.hoch{color:var(--warn);background:color-mix(in srgb,var(--warn) 16%,transparent)}
+.t-prio.dringend{color:var(--crit);background:color-mix(in srgb,var(--crit) 16%,transparent)}
+.t-prio .ico{width:13px;height:13px}
+.t-title{display:flex;gap:10px;align-items:flex-start;font-weight:700;line-height:1.3;overflow-wrap:anywhere;min-width:0}
+.t-title .tx{min-width:0}
+.t-card.is-done .t-title .tx,.t-row.is-done .t-title .tx{color:var(--muted)}
+.t-check{flex:none;width:20px;height:20px;border-radius:50%;border:0;padding:0;margin-top:1px;cursor:pointer;display:grid;place-items:center;background:transparent;box-shadow:inset 0 0 0 1.8px var(--faint);color:var(--accent-ink)}
+.t-check:hover{box-shadow:inset 0 0 0 1.8px var(--accent)}
+.t-check.on{background:var(--accent);box-shadow:inset 0 1px 1px var(--hl-1)}
+@media (pointer:coarse){.t-check{width:26px;height:26px}.t-actions button{width:32px;height:32px}}
+.t-meta{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:26px;min-width:0}
+.t-due{display:inline-flex;align-items:center;gap:6px;font-size:.8rem;font-weight:600;color:var(--muted);white-space:nowrap}
+.t-due.crit{color:var(--crit)}
+.t-due.today{color:var(--accent)}
+.t-actions{display:inline-flex;gap:2px;opacity:0;margin-left:auto}
+.t-card:hover .t-actions,.t-card:focus-within .t-actions,.t-card:focus-visible .t-actions,.t-actions:focus-within{opacity:1}
+@media (hover:none){.t-actions{opacity:1}}
+.t-actions button{border:0;background:var(--well-2);color:var(--muted);width:24px;height:24px;border-radius:50%;cursor:pointer;display:grid;place-items:center;font-size:.85rem;line-height:1;padding:0}
+.t-actions button:hover:not(:disabled){color:var(--fg)}
+.t-actions .t-x:hover{color:var(--crit)}
+.t-actions button:disabled{opacity:.35;cursor:default}
+.t-comp{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;padding:12px;border-radius:var(--r-lg);background:var(--well)}
+.t-comp input,.t-comp select{background:var(--well);border:0;box-shadow:inset 0 0 0 1px var(--line);border-radius:12px;padding:9px 12px;min-width:0;width:100%}
+.t-comp input[type=text],.t-comp .btn,.t-comp .cap{grid-column:1/-1}
+.t-comp .cap{font-size:.78rem;color:var(--muted);font-weight:600}
+.t-comp.wide{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.t-list{padding:12px 16px}
+.t-rows{list-style:none;margin:0;padding:0;display:grid}
+.t-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;padding:12px 4px;border-top:1px solid var(--line);min-width:0}
+.t-row:first-child{border-top:0}
+.t-row .t-title{flex:1 1 220px}
+.t-row select{background:var(--well);border:0;box-shadow:inset 0 0 0 1px var(--line);border-radius:999px;padding:6px 12px;min-width:0}
+.t-row .t-del{border:0;background:none;color:var(--faint);cursor:pointer;border-radius:50%;width:28px;height:28px}
+.t-row .t-del:hover{color:var(--crit);background:var(--well-2)}
+.t-note{justify-items:center;text-align:center;padding:36px 20px;color:var(--muted)}
+.t-note p{margin:0}
 </style>
 
 <style>
@@ -291,7 +364,7 @@ body,.glass,.panel,.course,.stat,.slot,.todo{transition:background-color .35s ea
     <nav class="nav">
       <a href="#top" class="active"><svg class="ico" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Übersicht</a>
       <a href="#sec-week"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Woche</a>
-      <a href="#sec-todo"><svg class="ico" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>To-dos<span class="badge" id="nav-todos">–</span></a>
+      <a href="#aufgaben"><svg class="ico" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>Aufgaben<span class="badge" id="nav-todos">–</span></a>
       <a href="#sec-charts"><svg class="ico" viewBox="0 0 24 24"><path d="M5 20V11M12 20V5M19 20v-6"/></svg>Auslastung</a>
       <a href="#sec-mail"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M4 7l8 6 8-6"/></svg>Mails</a>
       <a href="#sec-courses"><svg class="ico" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Fächer</a>
@@ -309,7 +382,7 @@ body,.glass,.panel,.course,.stat,.slot,.todo{transition:background-color .35s ea
     <header class="anim head">
       <div>
         <h1>Cockpit</h1>
-        <div class="sub"><span id="today-line">&nbsp;</span> · Wirtschaftsinformatik, 1. Semester</div>
+        <div class="sub"><span id="head-sub"><span id="sub-home"><span id="today-line">&nbsp;</span> · Wirtschaftsinformatik, 1. Semester</span><span id="sub-tasks" hidden></span></span></div>
       </div>
       <div class="tools glass" role="toolbar" aria-label="Werkzeuge">
         <label class="search" for="q"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
@@ -323,6 +396,7 @@ body,.glass,.panel,.course,.stat,.slot,.todo{transition:background-color .35s ea
       </div>
     </header>
 
+    <div id="view-home">
     <div class="anim stats">
       <div class="stat glass anim"><span class="label">Heute</span><b id="st-today">–</b></div>
       <div class="stat glass anim"><span class="label">Uni diese Woche</span><b id="st-hours">–</b></div>
@@ -411,12 +485,37 @@ body,.glass,.panel,.course,.stat,.slot,.todo{transition:background-color .35s ea
       </div>
       <div class="courses" id="courses"></div>
     </section>
+    </div>
+
+    <div id="view-tasks" hidden>
+      <div class="stats" id="t-stats">
+        <div class="stat glass"><span class="label">Offen</span><b id="ts-open">–</b></div>
+        <div class="stat glass"><span class="label">Fällig diese Woche</span><b id="ts-week">–</b></div>
+        <div class="stat glass"><span class="label">Überfällig</span><b id="ts-over">–</b></div>
+        <div class="stat glass"><span class="label">Diese Woche erledigt</span><b id="ts-done">–</b></div>
+      </div>
+      <div class="t-tools">
+        <div class="seg" role="group" aria-label="Ansicht" id="t-view">
+          <button type="button" data-v="board" aria-pressed="true">Board</button>
+          <button type="button" data-v="list" aria-pressed="false">Liste</button>
+        </div>
+        <button class="btn" id="t-new" type="button">+ Neue Aufgabe</button>
+      </div>
+      <div class="t-filter glass" role="group" aria-label="Aufgaben filtern">
+        <label class="vh" for="tf-course">Fach</label><select id="tf-course"></select>
+        <label class="vh" for="tf-prio">Priorität</label>
+        <select id="tf-prio"><option value="all">Jede Priorität</option><option value="hoch">Hoch</option><option value="dringend">Dringend</option></select>
+        <label class="vh" for="tf-text">Aufgaben filtern</label>
+        <input id="tf-text" type="search" placeholder="Nach Titel oder Fach filtern" autocomplete="off">
+      </div>
+      <div id="t-body"></div>
+    </div>
   </main>
 </div>
 <nav class="bnav glass" aria-label="Navigation">
   <a href="#top" class="active"><svg class="ico" viewBox="0 0 24 24"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Übersicht</a>
   <a href="#sec-week"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Woche</a>
-  <a href="#sec-todo"><svg class="ico" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>To-dos</a>
+  <a href="#aufgaben"><svg class="ico" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg>Aufgaben</a>
   <a href="#sec-mail"><svg class="ico" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M4 7l8 6 8-6"/></svg>Mails</a>
   <a href="#sec-courses"><svg class="ico" viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Fächer</a>
 </nav>
@@ -731,8 +830,254 @@ function applyFilters(){
   if (focus) { fc.hidden = false; fc.style.setProperty("--c", `var(--c-${focus})`); fc.textContent = `Nur ${COURSES[focus].short} · ✕`; fc.setAttribute("aria-label", `Filter ${COURSES[focus].name} aufheben`); }
   else fc.hidden = true;
 }
-function renderAll(){ renderHeader(); renderWeek(); renderNext(); renderTodos(); renderCourses(); renderCharts(); applyFilters(); }
+/* ---------- Aufgaben (Board / Liste) ---------- */
+const T_COLS = [["todo","Offen"],["doing","In Arbeit"],["done","Erledigt"]];
+const T_PRIO = {hoch:"Hoch", dringend:"Dringend"};
+const T_ICO = {
+  cal:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width:14px;height:14px"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  flag:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>',
+  check:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width:12px;height:12px;stroke-width:3"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
+  plus:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width:15px;height:15px"><path d="M12 5v14M5 12h14"/></svg>'
+};
+const tFilter = {course:"all", prio:"all", text:""};
+let taskView = "board", composer = null, focusComposer = false, dragId = null;
+try { const v = localStorage.getItem("cockpit-tasks-view"); if (v === "list" || v === "board") taskView = v; } catch(e){}
+const tStatus = t => t.done ? "done" : (t.status === "doing" ? "doing" : "todo");
+const tCourse = t => COURSES[t.course] ? t.course : "X";
+const courseLabel = k => k === "X" ? "Sonstiges" : (COURSES[k]?.name || "Sonstiges");
+const pad2 = n => String(n).padStart(2, "0");
+const isTasksRoute = () => location.hash === "#aufgaben";
+const tSort = (a, b) => (a.due || "9999-99-99").localeCompare(b.due || "9999-99-99") || (a.created || 0) - (b.created || 0);
+
+$("tf-course").innerHTML = `<option value="all">Alle Fächer</option>` + Object.keys(COURSES).map(k => `<option value="${k}">${esc(courseLabel(k))}</option>`).join("");
+
+function tDue(t){
+  if (!t.due) return null;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const d = new Date(t.due + "T00:00:00"); if (isNaN(d)) return null;
+  const days = Math.round((d - today) / 86400000);
+  const label = days === 0 ? "Heute" : days === 1 ? "Morgen" : days === -1 ? "Gestern" : Math.abs(days) <= 6 ? DAYS[d.getDay()] : `${pad2(d.getDate())}.${pad2(d.getMonth()+1)}.`;
+  return {days, label};
+}
+function tVisible(){
+  const q = query.trim().toLowerCase(), f = tFilter.text.trim().toLowerCase();
+  return todos().filter(t => {
+    const c = tCourse(t);
+    if (tFilter.course !== "all" && c !== tFilter.course) return false;
+    if (tFilter.prio !== "all" && (t.prio || "") !== tFilter.prio) return false;
+    const hay = `${t.text || ""} ${courseLabel(c)} ${COURSES[c].short}`.toLowerCase();
+    return (!q || hay.includes(q)) && (!f || hay.includes(f));
+  }).sort(tSort);
+}
+function pillsHtml(t){
+  const c = tCourse(t);
+  return `<span class="t-pills"><span class="t-course" style="--c:var(--c-${c})"><span class="dot"></span><span class="n">${esc(courseLabel(c))}</span></span>` +
+    (T_PRIO[t.prio] ? `<span class="t-prio ${esc(t.prio)}">${T_ICO.flag}${T_PRIO[t.prio]}</span>` : "") + `</span>`;
+}
+function dueHtml(t, st){
+  if (st === "done") { const d = t.doneAt ? new Date(t.doneAt) : null; return `<span class="t-due">✓ ${d && !isNaN(d) ? `${pad2(d.getDate())}.${pad2(d.getMonth()+1)}.` : "erledigt"}</span>`; }
+  const di = tDue(t);
+  return di ? `<span class="t-due${di.days < 0 ? " crit" : di.days === 0 ? " today" : ""}">${T_ICO.cal}${esc(di.label)}</span>` : `<span></span>`;
+}
+const checkHtml = (t, st) => `<button type="button" class="t-check${st === "done" ? " on" : ""}" data-tcheck aria-pressed="${st === "done"}" aria-label="${st === "done" ? "Als offen markieren" : "Als erledigt markieren"}">${st === "done" ? T_ICO.check : ""}</button>`;
+
+function cardHtml(t){
+  const st = tStatus(t), idx = T_COLS.findIndex(c => c[0] === st);
+  return `<article class="t-card${st === "done" ? " is-done" : ""}" data-id="${esc(t.id)}" draggable="true" tabindex="0">
+    ${pillsHtml(t)}
+    <div class="t-title">${checkHtml(t, st)}<span class="tx">${esc(t.text)}</span></div>
+    <div class="t-meta">${dueHtml(t, st)}<span class="t-actions">
+      <button type="button" data-tmove="-1" aria-label="Nach links verschieben" ${idx === 0 ? "disabled" : ""}>←</button>
+      <button type="button" data-tmove="1" aria-label="Nach rechts verschieben" ${idx === 2 ? "disabled" : ""}>→</button>
+      <button type="button" class="t-x" data-tdel aria-label="Aufgabe löschen">×</button></span></div>
+  </article>`;
+}
+function rowHtml(t){
+  const st = tStatus(t);
+  return `<li class="t-row${st === "done" ? " is-done" : ""}" data-id="${esc(t.id)}">
+    <div class="t-title">${checkHtml(t, st)}<span class="tx">${esc(t.text)}</span></div>
+    ${pillsHtml(t)}
+    <select data-tstatus aria-label="Status">${T_COLS.map(([k,l]) => `<option value="${k}"${k === st ? " selected" : ""}>${l}</option>`).join("")}</select>
+    ${dueHtml(t, st)}
+    <button type="button" class="t-del" data-tdel aria-label="Aufgabe löschen">×</button>
+  </li>`;
+}
+function composerHtml(wide){
+  const c = composer, label = T_COLS.find(x => x[0] === c.status)[1];
+  return `<form class="t-comp${wide ? " wide" : ""}" data-comp="${c.status}">
+    <span class="cap">Neue Aufgabe · ${esc(label)}</span>
+    <label class="vh" for="c-text">Aufgabe</label><input id="c-text" type="text" required placeholder="Übungsblatt 3 abgeben" autocomplete="off" value="${esc(c.text)}">
+    <label class="vh" for="c-course">Fach</label><select id="c-course">${Object.keys(COURSES).map(k => `<option value="${k}"${k === c.course ? " selected" : ""}>${esc(courseLabel(k))}</option>`).join("")}</select>
+    <label class="vh" for="c-due">Fällig am</label><input id="c-due" type="date" value="${esc(c.due)}">
+    <label class="vh" for="c-prio">Priorität</label><select id="c-prio"><option value=""${c.prio === "" ? " selected" : ""}>Normal</option><option value="hoch"${c.prio === "hoch" ? " selected" : ""}>Hoch</option><option value="dringend"${c.prio === "dringend" ? " selected" : ""}>Dringend</option></select>
+    <button class="btn" type="submit">Hinzufügen</button>
+  </form>`;
+}
+function colHtml([k, title], list){
+  return `<section class="t-col glass" data-status-col="${k}" aria-label="${title}">
+    <div class="t-colh"><span class="t-dot ${k}" aria-hidden="true"></span><h2>${title}</h2><span class="count-pill">${list.length}</span>
+      <button type="button" class="t-add" data-tadd="${k}" aria-label="Aufgabe in „${title}“ hinzufügen" ${col ? "" : "disabled"}>${T_ICO.plus}</button></div>
+    ${composer && composer.status === k ? composerHtml(false) : ""}
+    <div class="t-cards">${list.length ? list.map(cardHtml).join("") : `<div class="t-nothing">Nichts hier</div>`}</div>
+  </section>`;
+}
+
+function applyTaskSub(){
+  const open = todos().filter(t => tStatus(t) !== "done");
+  const n = new Set(open.map(tCourse)).size;
+  $("sub-tasks").textContent = `${col ? open.length : 0} offen · ${n} ${n === 1 ? "Fach" : "Fächer"}`;
+}
+function renderTasks(){
+  const root = $("t-body"); if (!root) return;
+  const all = todos(), now = new Date(), mon = mondayOf(now), nextMon = new Date(mon.getTime() + 7*86400000);
+  const today = ymd(now), wkA = ymd(mon), wkB = ymd(nextMon);
+  const notDone = all.filter(t => tStatus(t) !== "done");
+  $("ts-open").textContent = col ? String(notDone.length) : "–";
+  $("ts-week").textContent = col ? String(notDone.filter(t => t.due && t.due >= wkA && t.due < wkB).length) : "–";
+  $("ts-over").textContent = col ? String(notDone.filter(t => t.due && t.due < today).length) : "–";
+  $("ts-done").textContent = col ? String(all.filter(t => tStatus(t) === "done" && t.doneAt >= mon.getTime() && t.doneAt < nextMon.getTime()).length) : "–";
+  applyTaskSub();
+  $("t-new").disabled = !col;
+  document.querySelectorAll("#t-view [data-v]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.v === taskView)));
+
+  // remember focus
+  const ae = document.activeElement; let keep = null;
+  if (ae && root.contains(ae)) {
+    if (ae.closest(".t-comp")) { let s = null, e = null; try { s = ae.selectionStart; e = ae.selectionEnd; } catch(_){} keep = {type:"comp", id:ae.id, s, e}; }
+    else { const host = ae.closest("[data-id]"); if (host) keep = {type:"item", id:host.dataset.id, sel: ae.matches("[data-tstatus]")}; }
+  }
+
+  if (!col) {
+    root.innerHTML = `<section class="panel glass t-note"><p>Aufgaben sind nur verfügbar, wenn der Speicher verbunden ist.</p></section><div class="t-board">${T_COLS.map(c => colHtml(c, [])).join("")}</div>`;
+  } else if (!all.length && !composer) {
+    root.innerHTML = `<section class="panel glass t-note"><p>Noch keine Aufgaben. Leg deine erste Abgabe an.</p><button class="btn" type="button" data-tnew>+ Neue Aufgabe</button></section>`;
+  } else if (taskView === "list") {
+    const vis = tVisible();
+    root.innerHTML = `<section class="panel glass t-list">${composer ? composerHtml(true) : ""}<ul class="t-rows">${vis.length ? vis.map(rowHtml).join("") : `<li class="state">Keine Aufgaben passen zum Filter.</li>`}</ul></section>`;
+  } else {
+    const vis = tVisible();
+    root.innerHTML = `<div class="t-board">${T_COLS.map(c => colHtml(c, vis.filter(t => tStatus(t) === c[0]))).join("")}</div>`;
+  }
+
+  // restore focus
+  if (focusComposer) { focusComposer = false; $("c-text")?.focus(); }
+  else if (keep?.type === "comp") { const el = $(keep.id); if (el) { el.focus(); try { if (keep.s != null) el.setSelectionRange(keep.s, keep.e); } catch(_){} } }
+  else if (keep?.type === "item") {
+    const host = [...root.querySelectorAll("[data-id]")].find(x => x.dataset.id === keep.id);
+    const el = host && (keep.sel ? host.querySelector("[data-tstatus]") : host.matches(".t-card") ? host : null);
+    if (el) el.focus({preventScroll:true});
+  }
+}
+
+async function setStatus(id, status){
+  const t = items.find(i => i.id === id); if (!t || !col || tStatus(t) === status) return;
+  try { await col.doc(id).update({status, done: status === "done", doneAt: status === "done" ? Date.now() : null}); } catch(err){ showDbErr(err); }
+}
+function openComposer(status){
+  if (!col) return;
+  composer = {status, text:"", course: tFilter.course !== "all" ? tFilter.course : "GI", due:"", prio:""};
+  focusComposer = true; renderTasks();
+}
+function closeComposer(){
+  const st = composer?.status; composer = null; renderTasks();
+  (document.querySelector(`#t-body [data-tadd="${st}"]`) || $("t-new")).focus();
+}
+
+(() => {
+  const root = $("t-body");
+  const idOf = el => el.closest("[data-id]")?.dataset.id;
+  root.addEventListener("click", async e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.hasAttribute("data-tnew")) return openComposer("todo");
+    if (b.dataset.tadd) return openComposer(b.dataset.tadd);
+    const id = idOf(b); if (!id) return;
+    const t = items.find(i => i.id === id); if (!t) return;
+    if (b.hasAttribute("data-tcheck")) return setStatus(id, tStatus(t) === "done" ? "todo" : "done");
+    if (b.dataset.tmove) { const i = T_COLS.findIndex(c => c[0] === tStatus(t)) + Number(b.dataset.tmove); if (T_COLS[i]) setStatus(id, T_COLS[i][0]); return; }
+    if (b.hasAttribute("data-tdel") && col) { try { await col.doc(id).delete(); } catch(err){ showDbErr(err); } }
+  });
+  root.addEventListener("change", e => {
+    if (e.target.matches("[data-tstatus]")) { const id = idOf(e.target); if (id) setStatus(id, e.target.value); }
+  });
+  const FIELD = {"c-text":"text", "c-course":"course", "c-due":"due", "c-prio":"prio"};
+  const draft = e => { if (composer && FIELD[e.target.id] && e.target.closest(".t-comp")) composer[FIELD[e.target.id]] = e.target.value; };
+  root.addEventListener("input", draft); root.addEventListener("change", draft);
+  root.addEventListener("submit", async e => {
+    e.preventDefault();
+    if (!col || !composer) return;
+    const c = composer, text = c.text.trim(); if (!text) return;
+    const done = c.status === "done";
+    composer = null; renderTasks();
+    try { await col.add({kind:"todo", text, course:c.course, due:c.due || null, done, status:c.status, prio:c.prio, created:Date.now(), doneAt: done ? Date.now() : null}); } catch(err){ showDbErr(err); }
+  });
+  root.addEventListener("keydown", e => {
+    if (e.key === "Escape" && e.target.closest(".t-comp")) { e.preventDefault(); closeComposer(); return; }
+    if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && e.target.classList.contains("t-card")) {
+      const t = items.find(i => i.id === e.target.dataset.id); if (!t) return;
+      const i = T_COLS.findIndex(c => c[0] === tStatus(t)) + (e.key === "ArrowRight" ? 1 : -1);
+      if (T_COLS[i]) { e.preventDefault(); setStatus(t.id, T_COLS[i][0]); }
+    }
+  });
+  // drag & drop between columns
+  const clearDrop = () => root.querySelectorAll(".t-col.drop").forEach(c => c.classList.remove("drop"));
+  root.addEventListener("dragstart", e => {
+    const card = e.target.closest?.(".t-card"); if (!card) return;
+    dragId = card.dataset.id; card.classList.add("dragging");
+    try { e.dataTransfer.setData("text/plain", dragId); e.dataTransfer.effectAllowed = "move"; } catch(_){}
+  });
+  root.addEventListener("dragend", () => { dragId = null; root.querySelectorAll(".dragging").forEach(c => c.classList.remove("dragging")); clearDrop(); });
+  root.addEventListener("dragover", e => {
+    const c = e.target.closest?.("[data-status-col]"); if (!c || !dragId) return;
+    e.preventDefault(); try { e.dataTransfer.dropEffect = "move"; } catch(_){}
+    if (!c.classList.contains("drop")) { clearDrop(); c.classList.add("drop"); }
+  });
+  root.addEventListener("dragleave", e => { const c = e.target.closest?.("[data-status-col]"); if (c && !c.contains(e.relatedTarget)) c.classList.remove("drop"); });
+  root.addEventListener("drop", e => {
+    const c = e.target.closest?.("[data-status-col]"); if (!c) return;
+    e.preventDefault(); clearDrop();
+    const id = dragId || e.dataTransfer?.getData("text/plain"); dragId = null;
+    if (id) setStatus(id, c.dataset.statusCol);
+  });
+  // toolbar + filters
+  $("t-new").addEventListener("click", () => openComposer("todo"));
+  $("t-view").addEventListener("click", e => {
+    const b = e.target.closest("[data-v]"); if (!b) return;
+    taskView = b.dataset.v; try { localStorage.setItem("cockpit-tasks-view", taskView); } catch(_){}
+    renderTasks();
+  });
+  $("tf-course").addEventListener("change", e => { tFilter.course = e.target.value; renderTasks(); });
+  $("tf-prio").addEventListener("change", e => { tFilter.prio = e.target.value; renderTasks(); });
+  $("tf-text").addEventListener("input", e => { tFilter.text = e.target.value; renderTasks(); });
+})();
+
+/* ---------- routing: Übersicht <-> Aufgaben ---------- */
+function markNav(){
+  const h = isTasksRoute() ? "#aufgaben" : (location.hash || "#top");
+  for (const sel of [".nav a", ".bnav a"]) {
+    const links = [...document.querySelectorAll(sel)];
+    const hit = links.some(a => a.getAttribute("href") === h) ? h : "#top";
+    links.forEach(a => a.classList.toggle("active", a.getAttribute("href") === hit));
+  }
+}
+let routed = false;
+function route(){
+  const tasks = isTasksRoute();
+  $("view-home").hidden = tasks; $("view-tasks").hidden = !tasks;
+  document.querySelector(".head h1").textContent = tasks ? "Aufgaben" : "Cockpit";
+  $("sub-home").hidden = tasks; $("sub-tasks").hidden = !tasks;
+  if (tasks) { renderTasks(); if (routed) $("top").scrollIntoView({block:"start"}); }
+  else {
+    renderHeader();
+    const id = location.hash.slice(1), el = id && document.getElementById(id);
+    if (el && routed) el.scrollIntoView({block:"start"});
+  }
+  markNav(); routed = true;
+}
+window.addEventListener("hashchange", route);
+
+function renderAll(){ renderHeader(); renderWeek(); renderNext(); renderTodos(); renderCourses(); renderCharts(); applyFilters(); renderTasks(); }
 renderAll();
+route();
 setInterval(() => { renderWeek(); renderNext(); renderCourses(); applyFilters(); }, 60000);
 
 /* ---------- interactions ---------- */
@@ -771,11 +1116,12 @@ setInterval(() => { renderWeek(); renderNext(); renderCourses(); applyFilters();
     if (e.key === "ArrowDown") { e.preventDefault(); items[(i+1)%items.length].focus(); } if (e.key === "ArrowUp") { e.preventDefault(); items[(i-1+items.length)%items.length].focus(); } });
   menu.addEventListener("click", e => { const b = e.target.closest("[data-act]"); if (!b) return; close(false);
     if (b.dataset.act === "slot") { const f = $("slot-form"); f.hidden = false; $("toggle-slot").setAttribute("aria-expanded","true"); $("sec-week").scrollIntoView({block:"start"}); setTimeout(() => $("s-title").focus({preventScroll:true}), 300); }
+    else if (isTasksRoute()) openComposer("todo");
     else { $("sec-todo").scrollIntoView({block:"start"}); setTimeout(() => $("t-text").focus({preventScroll:true}), 300); } });
 })();
 // search
-$("q").addEventListener("input", e => { query = e.target.value; applyFilters(); });
-$("q").addEventListener("keydown", e => { if (e.key === "Escape") { e.target.value = ""; query = ""; applyFilters(); e.target.blur(); } });
+$("q").addEventListener("input", e => { query = e.target.value; applyFilters(); renderTasks(); });
+$("q").addEventListener("keydown", e => { if (e.key === "Escape") { e.target.value = ""; query = ""; applyFilters(); renderTasks(); e.target.blur(); } });
 document.addEventListener("keydown", e => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); $("q").focus(); } });
 // segmented filter + course focus
 $("seg").addEventListener("click", e => { const b = e.target.closest("[data-seg]"); if (!b) return; segFilter = b.dataset.seg; renderSeg(); applyFilters(); });
@@ -798,7 +1144,7 @@ $("todo-form").addEventListener("submit", async e => {
   e.preventDefault();
   if (!col) return;
   const text = $("t-text").value.trim(); if (!text) return;
-  const data = {kind:"todo", text, course:$("t-course").value, due:$("t-due").value || null, done:false, created:Date.now()};
+  const data = {kind:"todo", text, course:$("t-course").value, due:$("t-due").value || null, done:false, status:"todo", prio:"", created:Date.now()};
   $("t-text").value = ""; $("t-due").value = "";
   try { await col.add(data); } catch(err){ showDbErr(err); }
 });
@@ -812,7 +1158,7 @@ $("slot-form").addEventListener("submit", async e => {
 });
 document.addEventListener("change", async e => {
   const id = e.target?.dataset?.toggle; if (!id || !col) return;
-  try { await col.doc(id).update({done: e.target.checked}); } catch(err){ showDbErr(err); }
+  try { await col.doc(id).update({done: e.target.checked, status: e.target.checked ? "done" : "todo", doneAt: e.target.checked ? Date.now() : null}); } catch(err){ showDbErr(err); }
 });
 document.addEventListener("click", async e => {
   const csk = e.target?.dataset?.cskip;
